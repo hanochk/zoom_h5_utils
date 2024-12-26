@@ -57,7 +57,7 @@ def convert_wav_to_mp3(input_directory, output_directory, bitrate="192k"):
 
 
 def monitor_usb_and_process(volume_label=None, output_directory="converted_mp3s",
-                            bitrate="192k", interval=5, opt=''):
+                            bitrate="192k", interval=5, opt='', wav_directory=''):
     """
     Monitor for a USB drive, extract WAV files, and convert them to MP3.
 
@@ -67,22 +67,26 @@ def monitor_usb_and_process(volume_label=None, output_directory="converted_mp3s"
         bitrate (str): Desired bitrate for MP3 files.
         interval (int): Time interval (seconds) to check for USB drives.
     """
-    print("Monitoring for USB drives...")
-    while True:
-        usb_drive = find_usb_drive(volume_label)
-        if usb_drive:
-            print(f"USB drive detected: {usb_drive}")
-            wav_directory = os.path.join(usb_drive, opt.zoom_rootpath)  # Assuming WAV files are stored in a "WAV" folder
-            if not os.path.exists(wav_directory):
-                print(f"No WAV directory found in {usb_drive}. Skipping...")
-                time.sleep(interval)
-                continue
 
-            print(f"Processing WAV files in: {wav_directory}")
-            convert_wav_to_mp3(wav_directory, output_directory, bitrate)
-            print("Processing complete. Waiting for new USB drives...")
+    if opt.skip_usb:
+        convert_wav_to_mp3(wav_directory, output_directory, bitrate)
+    else:
+        print("Monitoring for USB drives...")
+        while True:
+            usb_drive = find_usb_drive(volume_label)
+            if usb_drive:
+                print(f"USB drive detected: {usb_drive}")
+                wav_directory = os.path.join(usb_drive, opt.zoom_rootpath)  # Assuming WAV files are stored in a "WAV" folder
+                if not os.path.exists(wav_directory):
+                    print(f"No WAV directory found in {usb_drive}. Skipping...")
+                    time.sleep(interval)
+                    continue
 
-        time.sleep(interval)
+                print(f"Processing WAV files in: {wav_directory}")
+                convert_wav_to_mp3(wav_directory, output_directory, bitrate)
+                print("Processing complete. Waiting for new USB drives...")
+
+            time.sleep(interval)
 
 
 if __name__ == "__main__":
@@ -92,14 +96,19 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     parser.add_argument('--zoom-rootpath', default='MULTI\FOLDER01', help='save to project/name')
+    parser.add_argument('--skip-usb', action='store_true', help='')
+
 
 
     opt = parser.parse_args()
 
-
-    # Monitor for any USB drive (set volume_label=None) or specify a volume label
-    monitor_usb_and_process(volume_label=None, output_directory=output_dir,
-                            bitrate="192k", interval=5, opt=opt)
+    if opt.skip_usb:
+        monitor_usb_and_process(volume_label=None, output_directory=output_dir,
+                                bitrate="192k", interval=5, opt=opt, wav_directory=r'C:\HanochWorkSPace\zoom_h5')
+    else:
+        # Monitor for any USB drive (set volume_label=None) or specify a volume label
+        monitor_usb_and_process(volume_label=None, output_directory=output_dir,
+                                bitrate="192k", interval=5, opt=opt)
 
 
 """
